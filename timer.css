@@ -15,6 +15,34 @@ body {
   gap: 10px;
 }
 
+/* PiP誘導オーバーレイ */
+.pip-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  cursor: pointer;
+}
+
+.pip-overlay-content {
+  text-align: center;
+  color: white;
+}
+
+.pip-overlay-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.pip-overlay-text {
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1.6;
+}
+
 /* ピンボタン表示時のレイアウト調整 */
 body.has-pin-bar {
   padding-top: 40px;

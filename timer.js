@@ -20,7 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const pinBtn = document.getElementById('btn-pin');
   const timerSizes = document.querySelector('.timer-sizes');
 
+  const autostart = params.get('autostart') === 'true';
   const hasPiP = 'documentPictureInPicture' in window;
+  const pipOverlay = document.getElementById('pip-overlay');
 
   // 小・中・大に応じたウィンドウサイズ
   const windowSizes = {
@@ -81,17 +83,26 @@ document.addEventListener('DOMContentLoaded', () => {
     suppressBeep = false;
   }
 
+  // AudioContextをユーザー操作のタイミングで初期化する
+  function ensureAudioContext() {
+    if (type === 'countdown' && !audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {}
+    }
+    // suspended状態の場合もresumeを試みる
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+  }
+
   // タイマー開始
   function startTimer() {
     if (isRunning) return;
     if (type === 'countdown' && timeRemaining <= 0) return;
 
     // ユーザー操作のタイミングでAudioContextを初期化（自動再生ポリシー対策）
-    if (type === 'countdown' && !audioCtx) {
-      try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      } catch (e) {}
-    }
+    ensureAudioContext();
 
     isRunning = true;
     startBtn.innerHTML = '<ruby>停止<rt>ていし</rt></ruby>';
@@ -108,7 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
 
     // 初回の開始時に自動でPiP（最前面表示）に切り替え
-    if (!pipAttempted && hasPiP) {
+    // （autostart時はオーバーレイ経由で行うのでスキップ）
+    if (!pipAttempted && hasPiP && !autostart) {
       pipAttempted = true;
       enterPiP();
     }
@@ -254,6 +266,46 @@ document.addEventListener('DOMContentLoaded', () => {
     enterPiP();
   });
 
-  // 初期表示
+  // ── PiPオーバーレイ（autostart時に表示） ──
+
+  function showPiPOverlay() {
+    pipOverlay.style.display = '';
+
+    // オーバーレイ表示中はキーボードショートカットを横取りして
+    // Space/EnterでPiP起動できるようにする
+    function handleOverlayKey(e) {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        dismissOverlay();
+      }
+    }
+    document.addEventListener('keydown', handleOverlayKey, true);
+
+    function dismissOverlay() {
+      document.removeEventListener('keydown', handleOverlayKey, true);
+      pipOverlay.style.display = 'none';
+
+      // ユーザー操作のタイミングでAudioContextを有効化
+      ensureAudioContext();
+
+      // PiPに入る
+      pipAttempted = true;
+      enterPiP();
+    }
+
+    pipOverlay.addEventListener('click', dismissOverlay, { once: true });
+  }
+
+  // ── 初期化 ──
+
   updateDisplay();
+
+  // autostart: ポップアップから直接タイマーを開始し、PiPオーバーレイを表示
+  if (autostart) {
+    startTimer();
+    if (hasPiP) {
+      showPiPOverlay();
+    }
+  }
 });
