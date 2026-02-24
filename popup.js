@@ -88,39 +88,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      // 4. 現在のタブにタイマー追加のメッセージを送信
-      const tabs = await chrome.tabs.query({active: true, currentWindow: true});
-      if (tabs.length === 0) throw new Error("タブが見つかりません");
+      // 4. 独立ウィンドウでタイマーを開く（どのページでも動作し、タブを変えても残る）
+      const totalSeconds = min * 60 + sec;
+      const timerUrl = chrome.runtime.getURL(
+        `timer.html?type=${encodeURIComponent(type)}&seconds=${totalSeconds}`
+      );
 
-      const activeTab = tabs[0];
-
-      // Chromeのシステムページなどでは実行できない
-      const url = activeTab.url || '';
-      if (url.startsWith("chrome://") || url.startsWith("edge://") || url.startsWith("about:") || url.startsWith("chrome-extension://")) {
-        showToast("このページでは使えません", true);
-        return;
-      }
-
-      // コンテンツスクリプトが未注入の場合に備え、先に注入を試みる
-      try {
-        await chrome.scripting.executeScript({
-          target: { tabId: activeTab.id },
-          files: ['content.js']
-        });
-        await chrome.scripting.insertCSS({
-          target: { tabId: activeTab.id },
-          files: ['content.css']
-        });
-      } catch (e) {
-        // 既に注入済みの場合はエラーになるが無視してよい
-      }
-
-      await chrome.tabs.sendMessage(activeTab.id, {
-        action: 'ADD_TIMER',
-        timerConfig: { type, min, sec }
+      await chrome.windows.create({
+        url: timerUrl,
+        type: 'popup',
+        width: 350,
+        height: 240
       });
 
-      showToast("タイマーを追加しました！");
+      // タイマーウィンドウが開いたらポップアップを閉じる
+      window.close();
     } catch (error) {
       showToast("追加に失敗しました", true);
     } finally {

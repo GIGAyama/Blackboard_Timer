@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+
+body {
+  margin: 0;
+  padding: 16px;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  gap: 12px;
+}
+
+/* タイマー表示（ウィンドウサイズに応じて自動拡縮） */
+.timer-display {
+  font-size: clamp(28px, 18vw, 160px);
+  font-weight: 700;
+  color: #333;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.timer-display.time-up {
+  color: #d93025;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+
+/* 操作ボタン */
+.timer-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  border: none;
+  border-radius: 4px;
+  padding: 8px 20px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+  color: white;
+  min-height: 36px;
+}
+
+.btn-start { background-color: #34a853; }
+.btn-start:hover { background-color: #2d8c46; }
+
+.btn-stop { background-color: #fbbc04; color: #333; }
+.btn-stop:hover { background-color: #e0a800; }
+
+.btn-reset { background-color: #ea4335; }
+.btn-reset:hover { background-color: #c5221f; }
+
+/* サイズ切り替えボタン */
+.timer-sizes {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-size {
+  background-color: #f1f3f4;
+  color: #5f6368;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.btn-size:hover { background-color: #e8eaed; }
+.btn-size.active { background-color: #e8f0fe; color: #1a73e8; border-color: #1a73e8; }
