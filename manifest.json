@@ -1,15 +1,10 @@
 {
   "manifest_version": 3,
   "name": "どこでも時間タイマー",
-  "version": "1.0",
-  "description": "画面のどこにでも置ける、大きさが変えられるタイマーです。",
+  "version": "1.1",
+  "description": "画面のどこにでも置ける、大きさが変えられるタイマーです。どのページでも動作し、タブを切り替えても表示され続けます。",
   "permissions": [
-    "storage",
-    "activeTab",
-    "scripting"
-  ],
-  "host_permissions": [
-    "<all_urls>"
+    "storage"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -19,13 +14,6 @@
       "128": "icon.png"
     }
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "css": ["content.css"],
-      "js": ["content.js"]
-    }
-  ],
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
