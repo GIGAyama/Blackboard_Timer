@@ -206,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // PiP内ではサイズボタンとピンボタンは非表示（ドラッグでリサイズ可能）
       timerSizes.style.display = 'none';
       pinBtn.style.display = 'none';
+      document.body.classList.remove('has-pin-bar');
 
       // UI要素をPiPウィンドウに移動（scriptタグ以外）
       const elementsToMove = document.querySelectorAll(
@@ -233,7 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
           timerSizes.style.display = '';
           // 再固定ボタンを表示（手動でPiPに戻せるようにする）
-          if (hasPiP) pinBtn.style.display = '';
+          if (hasPiP) {
+            pinBtn.style.display = '';
+            document.body.classList.add('has-pin-bar');
+          }
 
           document.addEventListener('keydown', handleKeydown);
           pipWindow = null;

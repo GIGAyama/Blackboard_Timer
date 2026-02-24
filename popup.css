@@ -137,3 +137,22 @@ input[type="number"]:disabled {
 .toast.error {
   background-color: #d93025; /* エラー時の赤色 */
 }
+
+/* フッター */
+.footer {
+  text-align: center;
+  color: #6c757d;
+  padding: 10px 0;
+  margin-top: 15px;
+  border-top: 1px solid #dee2e6;
+  font-size: 0.8em;
+}
+
+.footer a {
+  text-decoration: none;
+  color: #6c757d;
+}
+
+.footer a:hover {
+  color: #1a73e8;
+}
