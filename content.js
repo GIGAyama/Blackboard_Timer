@@ -25,13 +25,20 @@ if (typeof window.gigaTimerInitialized === 'undefined') {
     let timeRemaining = type === 'countdown' ? initialSeconds : 0;
     let timerInterval = null;
     let isRunning = false;
+    let audioCtx = null;
 
     // 秒を「分:秒」に変換
     function formatTime(seconds) {
       const m = Math.floor(Math.abs(seconds) / 60);
       const s = Math.abs(seconds) % 60;
-      const sign = seconds < 0 ? "-" : "";
-      return `${sign}${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // 現在のスケール倍率を取得
+    function getScale() {
+      if (container.classList.contains('size-small')) return 0.6;
+      if (container.classList.contains('size-large')) return 2.5;
+      return 1;
     }
 
     // 全ての漢字にルビを適用したUIを生成
@@ -64,11 +71,41 @@ if (typeof window.gigaTimerInitialized === 'undefined') {
     const sizeBtns = container.querySelectorAll('.giga-btn-size');
     const header = container.querySelector('.giga-timer-header');
 
+    // タイムアップ時の音声を再生 (Web Audio API)
+    function playTimeUpSound() {
+      try {
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        function beep(startTime, freq, duration) {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.3, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+          osc.start(startTime);
+          osc.stop(startTime + duration);
+        }
+        // ピピピッ♪ の3連ビープ
+        beep(now, 880, 0.15);
+        beep(now + 0.2, 880, 0.15);
+        beep(now + 0.4, 1100, 0.3);
+      } catch (e) {
+        // Audio APIが利用できない環境では無視
+      }
+    }
+
     // 時間の表示を更新
     function updateDisplay() {
       display.textContent = formatTime(timeRemaining);
       if (type === 'countdown' && timeRemaining <= 0) {
         display.classList.add('time-up');
+        if (isRunning) {
+          playTimeUpSound();
+        }
         stopTimer();
       } else {
         display.classList.remove('time-up');
@@ -79,6 +116,13 @@ if (typeof window.gigaTimerInitialized === 'undefined') {
     function startTimer() {
       if (isRunning) return;
       if (type === 'countdown' && timeRemaining <= 0) return;
+
+      // ユーザー操作のタイミングでAudioContextを初期化（ブラウザの自動再生ポリシー対策）
+      if (type === 'countdown' && !audioCtx) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {}
+      }
 
       isRunning = true;
       startBtn.innerHTML = '<ruby>停止<rt>ていし</rt></ruby>';
@@ -114,6 +158,7 @@ if (typeof window.gigaTimerInitialized === 'undefined') {
     resetBtn.addEventListener('click', () => {
       stopTimer();
       timeRemaining = type === 'countdown' ? initialSeconds : 0;
+      display.classList.remove('time-up');
       updateDisplay();
     });
 
@@ -129,15 +174,25 @@ if (typeof window.gigaTimerInitialized === 'undefined') {
       });
     });
 
-    // ドラッグ＆ドロップで自由に移動できる仕組み
+    // ── ドラッグ＆ドロップ（マウス＋タッチ両対応） ──
     let isDragging = false;
     let offsetX, offsetY;
 
+    // マウスとタッチの座標を統一的に取得するヘルパー
+    function getPointerPos(e) {
+      if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+      return { x: e.clientX, y: e.clientY };
+    }
+
     function dragStart(e) {
-      if (e.target === header || header.contains(e.target)) {
+      const target = e.target;
+      if (target === header || header.contains(target)) {
         isDragging = true;
-        offsetX = e.clientX - container.offsetLeft;
-        offsetY = e.clientY - container.offsetTop;
+        const pos = getPointerPos(e);
+        offsetX = pos.x - container.offsetLeft;
+        offsetY = pos.y - container.offsetTop;
         e.preventDefault();
       }
     }
@@ -145,11 +200,13 @@ if (typeof window.gigaTimerInitialized === 'undefined') {
     function drag(e) {
       if (!isDragging) return;
       e.preventDefault();
-      const newX = e.clientX - offsetX;
-      const newY = e.clientY - offsetY;
-      // 画面外に出ないように制限する
-      const maxX = window.innerWidth - container.offsetWidth;
-      const maxY = window.innerHeight - container.offsetHeight;
+      const pos = getPointerPos(e);
+      const newX = pos.x - offsetX;
+      const newY = pos.y - offsetY;
+      // スケール倍率を考慮して画面外に出ないよう制限
+      const scale = getScale();
+      const maxX = window.innerWidth - container.offsetWidth * scale;
+      const maxY = window.innerHeight - container.offsetHeight * scale;
       container.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
       container.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
     }
@@ -158,16 +215,29 @@ if (typeof window.gigaTimerInitialized === 'undefined') {
       isDragging = false;
     }
 
+    // マウスイベント
     header.addEventListener('mousedown', dragStart);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', dragEnd);
 
+    // タッチイベント（Chromebook・電子黒板対応）
+    header.addEventListener('touchstart', dragStart, { passive: false });
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', dragEnd);
+
     // タイマーを閉じる時にリスナーもきちんと解除する
     closeBtn.addEventListener('click', () => {
       stopTimer();
+      if (audioCtx) {
+        audioCtx.close().catch(() => {});
+        audioCtx = null;
+      }
       header.removeEventListener('mousedown', dragStart);
       document.removeEventListener('mousemove', drag);
       document.removeEventListener('mouseup', dragEnd);
+      header.removeEventListener('touchstart', dragStart);
+      document.removeEventListener('touchmove', drag);
+      document.removeEventListener('touchend', dragEnd);
       container.remove();
     });
   }

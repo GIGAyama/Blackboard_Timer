@@ -15,6 +15,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ストレージが利用できない場合はデフォルト値を使う
   }
 
+  // タイマー種類に応じて時間入力の有効/無効を切り替える
+  function updateTimeInputState() {
+    const isCountup = typeSelect.value === 'countup';
+    minInput.disabled = isCountup;
+    secInput.disabled = isCountup;
+  }
+
+  typeSelect.addEventListener('change', updateTimeInputState);
+  updateTimeInputState(); // 初期状態を反映
+
   // Toast通知を表示する関数
   function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
@@ -37,6 +47,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 入力フィールドからフォーカスが外れた時に値を補正する
   minInput.addEventListener('blur', () => clampInput(minInput, 0, 99));
   secInput.addEventListener('blur', () => clampInput(secInput, 0, 59));
+
+  // スクロールホイールで値が変わるのを防ぐ
+  minInput.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+  secInput.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+
+  // Enterキーで追加できるようにする
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !addBtn.disabled) {
+      addBtn.click();
+    }
+  });
 
   // 追加ボタンが押されたときの処理
   addBtn.addEventListener('click', async () => {
@@ -73,9 +94,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const activeTab = tabs[0];
 
-      // Chromeのシステムページなどでは実行できないためのエラーハンドリング
-      if (activeTab.url.startsWith("chrome://") || activeTab.url.startsWith("edge://") || activeTab.url.startsWith("about:")) {
-        throw new Error("このページでは動作できません");
+      // Chromeのシステムページなどでは実行できない
+      const url = activeTab.url || '';
+      if (url.startsWith("chrome://") || url.startsWith("edge://") || url.startsWith("about:") || url.startsWith("chrome-extension://")) {
+        showToast("このページでは使えません", true);
+        return;
+      }
+
+      // コンテンツスクリプトが未注入の場合に備え、先に注入を試みる
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: activeTab.id },
+          files: ['content.js']
+        });
+        await chrome.scripting.insertCSS({
+          target: { tabId: activeTab.id },
+          files: ['content.css']
+        });
+      } catch (e) {
+        // 既に注入済みの場合はエラーになるが無視してよい
       }
 
       await chrome.tabs.sendMessage(activeTab.id, {
@@ -85,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       showToast("タイマーを追加しました！");
     } catch (error) {
-      showToast("追加に失敗しました。ページを更新してください。", true);
+      showToast("追加に失敗しました", true);
     } finally {
       // 5. ローディング表示終了
       addBtn.disabled = false;
