@@ -45,6 +45,13 @@ select, input[type="number"] {
   font-family: 'Zen Maru Gothic', sans-serif;
   font-size: 1rem;
   box-sizing: border-box;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+input[type="number"]:disabled {
+  background-color: #f1f3f4;
+  color: #9aa0a6;
+  cursor: not-allowed;
 }
 
 .time-inputs {

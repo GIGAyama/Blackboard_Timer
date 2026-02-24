@@ -15,6 +15,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ストレージが利用できない場合はデフォルト値を使う
   }
 
+  // タイマー種類に応じて時間入力の有効/無効を切り替える
+  function updateTimeInputState() {
+    const isCountup = typeSelect.value === 'countup';
+    minInput.disabled = isCountup;
+    secInput.disabled = isCountup;
+  }
+
+  typeSelect.addEventListener('change', updateTimeInputState);
+  updateTimeInputState(); // 初期状態を反映
+
   // Toast通知を表示する関数
   function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
@@ -37,6 +47,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 入力フィールドからフォーカスが外れた時に値を補正する
   minInput.addEventListener('blur', () => clampInput(minInput, 0, 99));
   secInput.addEventListener('blur', () => clampInput(secInput, 0, 59));
+
+  // スクロールホイールで値が変わるのを防ぐ
+  minInput.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+  secInput.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+
+  // Enterキーで追加できるようにする
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !addBtn.disabled) {
+      addBtn.click();
+    }
+  });
 
   // 追加ボタンが押されたときの処理
   addBtn.addEventListener('click', async () => {
