@@ -15,6 +15,28 @@ body {
   gap: 12px;
 }
 
+/* 最前面に固定ボタン */
+.btn-pin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 12px;
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  border: none;
+  border-bottom: 1px solid #c5d7f7;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn-pin:hover {
+  background-color: #d2e3fc;
+}
+
 /* タイマー表示（ウィンドウサイズに応じて自動拡縮） */
 .timer-display {
   font-size: clamp(28px, 18vw, 160px);
@@ -81,3 +103,13 @@ body {
 
 .btn-size:hover { background-color: #e8eaed; }
 .btn-size.active { background-color: #e8f0fe; color: #1a73e8; border-color: #1a73e8; }
+
+/* PiP中の元ウィンドウに表示するメッセージ */
+.pip-placeholder {
+  text-align: center;
+  padding: 40px 20px;
+  font-family: 'Zen Maru Gothic', sans-serif;
+  color: #666;
+  font-size: 14px;
+  line-height: 2;
+}

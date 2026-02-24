@@ -8,11 +8,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let timerInterval = null;
   let isRunning = false;
   let audioCtx = null;
+  let pipWindow = null;
 
   const display = document.getElementById('timer-display');
   const startBtn = document.getElementById('btn-start');
   const resetBtn = document.getElementById('btn-reset');
   const sizeBtns = document.querySelectorAll('.btn-size');
+  const pinBtn = document.getElementById('btn-pin');
+  const timerSizes = document.querySelector('.timer-sizes');
+
+  // Document Picture-in-Picture 非対応ならピンボタンを非表示
+  if (!('documentPictureInPicture' in window)) {
+    pinBtn.style.display = 'none';
+  }
 
   // 小・中・大に応じたウィンドウサイズ
   const windowSizes = {
@@ -138,13 +146,71 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // キーボードショートカット
-  document.addEventListener('keydown', (e) => {
+  function handleKeydown(e) {
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
       if (isRunning) stopTimer();
       else startTimer();
     } else if (e.key === 'r' || e.key === 'R') {
       resetBtn.click();
+    }
+  }
+
+  document.addEventListener('keydown', handleKeydown);
+
+  // ── 最前面に固定 (Document Picture-in-Picture API) ──
+  pinBtn.addEventListener('click', async () => {
+    if (!('documentPictureInPicture' in window)) return;
+
+    try {
+      pipWindow = await documentPictureInPicture.requestWindow({
+        width: 350,
+        height: 240
+      });
+
+      // スタイルシートをPiPウィンドウにコピー
+      [...document.querySelectorAll('link[rel="stylesheet"], style')].forEach(el => {
+        pipWindow.document.head.appendChild(el.cloneNode(true));
+      });
+
+      // PiP内ではサイズボタン・ピンボタンは不要（ドラッグでリサイズ可能）
+      timerSizes.style.display = 'none';
+      pinBtn.style.display = 'none';
+
+      // タイマーのUI要素をPiPウィンドウに移動（scriptタグ以外）
+      const elementsToMove = document.querySelectorAll(
+        '#btn-pin, .timer-display, .timer-controls, .timer-sizes'
+      );
+      elementsToMove.forEach(el => pipWindow.document.body.appendChild(el));
+
+      // PiPウィンドウにキーボードイベントを登録
+      document.removeEventListener('keydown', handleKeydown);
+      pipWindow.document.addEventListener('keydown', handleKeydown);
+
+      // 元ウィンドウに案内メッセージを表示
+      const msg = document.createElement('div');
+      msg.className = 'pip-placeholder';
+      msg.innerHTML = 'タイマーは<ruby>最前面<rt>さいぜんめん</rt></ruby>に<br><ruby>表示中<rt>ひょうじちゅう</rt></ruby>です。<br><br><small>このウィンドウは<ruby>閉<rt>と</rt></ruby>じないでください。</small>';
+      document.body.appendChild(msg);
+
+      // PiPウィンドウが閉じられたら元に戻す
+      pipWindow.addEventListener('pagehide', () => {
+        // pagehide後にブラウザが要素を自動で元のDOMに戻す。
+        // setTimeout(0)でその完了を待ってからUIを復元する。
+        setTimeout(() => {
+          const placeholder = document.querySelector('.pip-placeholder');
+          if (placeholder) placeholder.remove();
+
+          timerSizes.style.display = '';
+          pinBtn.style.display = '';
+
+          document.addEventListener('keydown', handleKeydown);
+          pipWindow = null;
+        }, 0);
+      });
+
+    } catch (e) {
+      // PiP起動失敗時は無視（元のウィンドウで引き続き使える）
     }
   });
 
