@@ -12,10 +12,10 @@ body {
   min-height: 100vh;
   overflow: hidden;
   user-select: none;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* 最前面に固定ボタン */
+/* 再固定ボタン（PiPが閉じた後に表示） */
 .btn-pin {
   position: absolute;
   top: 0;
@@ -55,6 +55,28 @@ body {
   0% { opacity: 1; }
   50% { opacity: 0.2; }
   100% { opacity: 1; }
+}
+
+/* 時間調整ボタン */
+.timer-adjust {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-adjust {
+  background-color: #f1f3f4;
+  color: #5f6368;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-adjust:hover {
+  background-color: #e8eaed;
 }
 
 /* 操作ボタン */

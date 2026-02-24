@@ -9,24 +9,24 @@ document.addEventListener('DOMContentLoaded', () => {
   let isRunning = false;
   let audioCtx = null;
   let pipWindow = null;
+  let pipAttempted = false;
+  let suppressBeep = false;
 
   const display = document.getElementById('timer-display');
   const startBtn = document.getElementById('btn-start');
   const resetBtn = document.getElementById('btn-reset');
   const sizeBtns = document.querySelectorAll('.btn-size');
+  const adjustBtns = document.querySelectorAll('.btn-adjust');
   const pinBtn = document.getElementById('btn-pin');
   const timerSizes = document.querySelector('.timer-sizes');
 
-  // Document Picture-in-Picture 非対応ならピンボタンを非表示
-  if (!('documentPictureInPicture' in window)) {
-    pinBtn.style.display = 'none';
-  }
+  const hasPiP = 'documentPictureInPicture' in window;
 
   // 小・中・大に応じたウィンドウサイズ
   const windowSizes = {
-    small: { width: 250, height: 180 },
-    medium: { width: 350, height: 240 },
-    large: { width: 500, height: 340 }
+    small: { width: 250, height: 200 },
+    medium: { width: 350, height: 280 },
+    large: { width: 500, height: 380 }
   };
 
   // 秒を「分:秒」に変換
@@ -71,11 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (type === 'countdown' && timeRemaining <= 0) {
       display.classList.add('time-up');
-      if (isRunning) playTimeUpSound();
-      stopTimer();
+      if (isRunning) {
+        if (!suppressBeep) playTimeUpSound();
+        stopTimer();
+      }
     } else {
       display.classList.remove('time-up');
     }
+    suppressBeep = false;
   }
 
   // タイマー開始
@@ -103,6 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       updateDisplay();
     }, 1000);
+
+    // 初回の開始時に自動でPiP（最前面表示）に切り替え
+    if (!pipAttempted && hasPiP) {
+      pipAttempted = true;
+      enterPiP();
+    }
   }
 
   // タイマー停止
@@ -115,18 +124,40 @@ document.addEventListener('DOMContentLoaded', () => {
     startBtn.classList.add('btn-start');
   }
 
+  // 時間の追加・削減（実行中でも停止中でもタイムアップ後でも使える）
+  function adjustTime(delta) {
+    timeRemaining += delta;
+    if (timeRemaining < 0) timeRemaining = 0;
+
+    // 時間が追加されたらtime-up状態を解除
+    if (type === 'countdown' && timeRemaining > 0) {
+      display.classList.remove('time-up');
+    }
+
+    // 手動操作によるゼロ到達ではビープを鳴らさない
+    suppressBeep = true;
+    updateDisplay();
+  }
+
   // 開始/停止 トグル
   startBtn.addEventListener('click', () => {
     if (isRunning) stopTimer();
     else startTimer();
   });
 
-  // リセット
+  // リセット（元の設定時間に戻す）
   resetBtn.addEventListener('click', () => {
     stopTimer();
     timeRemaining = type === 'countdown' ? initialSeconds : 0;
     display.classList.remove('time-up');
     updateDisplay();
+  });
+
+  // 時間調整ボタン
+  adjustBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      adjustTime(parseInt(btn.dataset.delta));
+    });
   });
 
   // サイズ変更（ウィンドウ自体をリサイズ）
@@ -158,14 +189,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('keydown', handleKeydown);
 
-  // ── 最前面に固定 (Document Picture-in-Picture API) ──
-  pinBtn.addEventListener('click', async () => {
-    if (!('documentPictureInPicture' in window)) return;
+  // ── PiP（最前面表示）──
 
+  async function enterPiP() {
     try {
       pipWindow = await documentPictureInPicture.requestWindow({
         width: 350,
-        height: 240
+        height: 280
       });
 
       // スタイルシートをPiPウィンドウにコピー
@@ -173,17 +203,17 @@ document.addEventListener('DOMContentLoaded', () => {
         pipWindow.document.head.appendChild(el.cloneNode(true));
       });
 
-      // PiP内ではサイズボタン・ピンボタンは不要（ドラッグでリサイズ可能）
+      // PiP内ではサイズボタンとピンボタンは非表示（ドラッグでリサイズ可能）
       timerSizes.style.display = 'none';
       pinBtn.style.display = 'none';
 
-      // タイマーのUI要素をPiPウィンドウに移動（scriptタグ以外）
+      // UI要素をPiPウィンドウに移動（scriptタグ以外）
       const elementsToMove = document.querySelectorAll(
-        '#btn-pin, .timer-display, .timer-controls, .timer-sizes'
+        '#btn-pin, .timer-display, .timer-adjust, .timer-controls, .timer-sizes'
       );
       elementsToMove.forEach(el => pipWindow.document.body.appendChild(el));
 
-      // PiPウィンドウにキーボードイベントを登録
+      // キーボードイベントをPiPウィンドウに移動
       document.removeEventListener('keydown', handleKeydown);
       pipWindow.document.addEventListener('keydown', handleKeydown);
 
@@ -193,16 +223,17 @@ document.addEventListener('DOMContentLoaded', () => {
       msg.innerHTML = 'タイマーは<ruby>最前面<rt>さいぜんめん</rt></ruby>に<br><ruby>表示中<rt>ひょうじちゅう</rt></ruby>です。<br><br><small>このウィンドウは<ruby>閉<rt>と</rt></ruby>じないでください。</small>';
       document.body.appendChild(msg);
 
-      // PiPウィンドウが閉じられたら元に戻す
+      // PiPウィンドウが閉じられたら復元
       pipWindow.addEventListener('pagehide', () => {
-        // pagehide後にブラウザが要素を自動で元のDOMに戻す。
-        // setTimeout(0)でその完了を待ってからUIを復元する。
+        // pagehide後にブラウザが要素を自動でDOMに戻す。
+        // setTimeout(0)で完了を待ってからUIを復元する。
         setTimeout(() => {
           const placeholder = document.querySelector('.pip-placeholder');
           if (placeholder) placeholder.remove();
 
           timerSizes.style.display = '';
-          pinBtn.style.display = '';
+          // 再固定ボタンを表示（手動でPiPに戻せるようにする）
+          if (hasPiP) pinBtn.style.display = '';
 
           document.addEventListener('keydown', handleKeydown);
           pipWindow = null;
@@ -210,8 +241,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     } catch (e) {
-      // PiP起動失敗時は無視（元のウィンドウで引き続き使える）
+      // PiP起動失敗時は通常ウィンドウで続行
     }
+  }
+
+  // 再固定ボタン（PiPが閉じられた後に手動で再度PiPに入る）
+  pinBtn.addEventListener('click', () => {
+    enterPiP();
   });
 
   // 初期表示

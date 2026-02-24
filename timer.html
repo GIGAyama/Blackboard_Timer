@@ -7,17 +7,28 @@
   <link rel="stylesheet" href="timer.css">
 </head>
 <body>
-  <button id="btn-pin" class="btn-pin"><ruby>最前面<rt>さいぜんめん</rt></ruby>に<ruby>固定<rt>こてい</rt></ruby></button>
+  <!-- PiPが閉じられた後に再固定するためのボタン（初期非表示） -->
+  <button id="btn-pin" class="btn-pin" style="display:none"><ruby>最前面<rt>さいぜんめん</rt></ruby>に<ruby>再固定<rt>さいこてい</rt></ruby></button>
+
   <div class="timer-display" id="timer-display">00:00</div>
+
+  <div class="timer-adjust">
+    <button class="btn-adjust" data-delta="-60">-1<ruby>分<rt>ぷん</rt></ruby></button>
+    <button class="btn-adjust" data-delta="60">+1<ruby>分<rt>ぷん</rt></ruby></button>
+    <button class="btn-adjust" data-delta="300">+5<ruby>分<rt>ぷん</rt></ruby></button>
+  </div>
+
   <div class="timer-controls">
     <button id="btn-start" class="btn btn-start"><ruby>開始<rt>かいし</rt></ruby></button>
     <button id="btn-reset" class="btn btn-reset"><ruby>戻<rt>もど</rt></ruby>す</button>
   </div>
+
   <div class="timer-sizes">
     <button class="btn-size" data-size="small"><ruby>小<rt>しょう</rt></ruby></button>
     <button class="btn-size active" data-size="medium"><ruby>中<rt>ちゅう</rt></ruby></button>
     <button class="btn-size" data-size="large"><ruby>大<rt>だい</rt></ruby></button>
   </div>
+
   <script src="timer.js"></script>
 </body>
 </html>

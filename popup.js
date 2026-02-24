@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         url: timerUrl,
         type: 'popup',
         width: 350,
-        height: 240
+        height: 280
       });
 
       // タイマーウィンドウが開いたらポップアップを閉じる
