@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h2>どこでも<ruby>時間<rt>じかん</rt></ruby>タイマー</h2>
+    
+    <div class="card">
+      <div class="form-group">
+        <label><ruby>種類<rt>しゅるい</rt></ruby></label>
+        <select id="timer-type">
+          <option value="countdown">カウントダウン</option>
+          <option value="countup">カウントアップ</option>
+        </select>
+      </div>
+      
+      <div class="form-group time-inputs">
+        <div class="input-wrapper">
+          <input type="number" id="input-min" min="0" max="99" value="3">
+          <span><ruby>分<rt>ふん</rt></ruby></span>
+        </div>
+        <div class="input-wrapper">
+          <input type="number" id="input-sec" min="0" max="59" value="0">
+          <span><ruby>秒<rt>びょう</rt></ruby></span>
+        </div>
+      </div>
+      
+      <button id="add-btn" class="primary-btn">
+        <span class="btn-text"><ruby>画面<rt>がめん</rt></ruby>に<ruby>追加<rt>ついか</rt></ruby>する</span>
+        <span class="spinner hidden"></span>
+      </button>
+    </div>
+
+    <!-- エラー・成功通知用のToast -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <!-- 指定のフッター (アプリ名にふりがなを付与) -->
+  <footer style="text-align: center; color: #6c757d; padding: 10px 0; margin-top: 15px; border-top: 1px solid #dee2e6; font-size: 0.8em;">
+    <small>© 2026 どこでも<ruby>時間<rt>じかん</rt></ruby>タイマー <a href="https://note.com/cute_borage86" target="_blank" style="text-decoration: none; color: #6c757d;">GIGA山</a></small>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
