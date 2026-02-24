@@ -91,14 +91,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       // 4. 独立ウィンドウでタイマーを開く（どのページでも動作し、タブを変えても残る）
       const totalSeconds = min * 60 + sec;
       const timerUrl = chrome.runtime.getURL(
-        `timer.html?type=${encodeURIComponent(type)}&seconds=${totalSeconds}`
+        `timer.html?type=${encodeURIComponent(type)}&seconds=${totalSeconds}&autostart=true`
       );
 
       await chrome.windows.create({
         url: timerUrl,
         type: 'popup',
         width: 350,
-        height: 240
+        height: 280
       });
 
       // タイマーウィンドウが開いたらポップアップを閉じる

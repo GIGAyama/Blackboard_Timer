@@ -12,16 +12,49 @@ body {
   min-height: 100vh;
   overflow: hidden;
   user-select: none;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* 最前面に固定ボタン */
+/* PiP誘導オーバーレイ */
+.pip-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  cursor: pointer;
+}
+
+.pip-overlay-content {
+  text-align: center;
+  color: white;
+}
+
+.pip-overlay-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.pip-overlay-text {
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1.6;
+}
+
+/* ピンボタン表示時のレイアウト調整 */
+body.has-pin-bar {
+  padding-top: 40px;
+}
+
+/* 再固定ボタン（PiPが閉じた後に表示） */
 .btn-pin {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  padding: 6px 12px;
+  padding: 8px 12px;
   background-color: #e8f0fe;
   color: #1a73e8;
   border: none;
@@ -31,6 +64,7 @@ body {
   font-weight: bold;
   cursor: pointer;
   text-align: center;
+  z-index: 10;
 }
 
 .btn-pin:hover {
@@ -55,6 +89,28 @@ body {
   0% { opacity: 1; }
   50% { opacity: 0.2; }
   100% { opacity: 1; }
+}
+
+/* 時間調整ボタン */
+.timer-adjust {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-adjust {
+  background-color: #f1f3f4;
+  color: #5f6368;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-adjust:hover {
+  background-color: #e8eaed;
 }
 
 /* 操作ボタン */
