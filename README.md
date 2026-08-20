@@ -101,3 +101,7 @@ Blackboard_Timer/
 ## ライセンス
 
 MIT License
+
+## プライバシーポリシー
+
+[PRIVACY.md](PRIVACY.md) をご覧ください。この拡張機能は利用者の情報を収集も送信もしません。
