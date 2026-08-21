@@ -96,7 +96,7 @@ Blackboard_Timer/
 
 ## 作者
 
-**GIGA山** — [note](https://note.com/cute_borage86)
+**GIGA山** — [GIGA school](https://giga-school.com)
 
 ## ライセンス
 
