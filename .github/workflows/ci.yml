@@ -1,0 +1,56 @@
+# =====================================================================
+# ci.yml — このリポジトリの最低限の点検
+# =====================================================================
+# Chrome 拡張なので、ビルドもテストも持たない。それでも次の 3 つは
+# 機械で見ておきたい。
+#
+#   1. syntax   — popup.js / timer.js が構文として壊れていないか。
+#      拡張は「読み込んで開くまで」誤りに気づけないので、ここで先に落とす。
+#   2. manifest — manifest.json が JSON として読めるか。壊れると拡張ごと
+#      読み込めなくなるが、画面には何も出ない。
+#   3. drift    — 配られたスキルが正本からずれていないか。
+#
+# ⚠️ これまでこのリポジトリには pull_request で走る検査が 1 つも無かった。
+#    壊れたまま main に入っても、誰も気づけない状態だった。
+# =====================================================================
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: .js の構文検査
+        run: |
+          set -e
+          fail=0
+          for f in *.js; do
+            [ -e "$f" ] || continue
+            node --check "$f" || fail=1
+          done
+          exit $fail
+      - name: manifest.json が JSON として読めるか
+        run: node -e "JSON.parse(require('fs').readFileSync('manifest.json','utf8')); console.log('manifest.json ok')"
+
+  # 配られたスキル（.claude/skills/）が正本からずれていないか。
+  # 正本は GIGAyama.github.io/standards/ にあり、そこを checkout して直に照合する。
+  # 実行時の依存は増えない（このリポジトリには何も足さない）。
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: GIGAyama/GIGAyama.github.io
+          path: .standards-src
+      - name: 正本とのずれ検知
+        run: node .standards-src/standards/check-drift.mjs --standards .standards-src/standards
