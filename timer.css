@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+/* 書体は timer.html から ./fonts.css を読んで当てる。
+   ここに外部への @import を書かないこと。@import は CSS の先頭に残り、
+   その相手が「握ったまま返さない」塞がれ方をすると描画が止まる。 */
 
 body {
   margin: 0;
